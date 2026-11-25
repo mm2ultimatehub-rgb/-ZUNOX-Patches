@@ -11,7 +11,7 @@ This is the intended patch configuration for the supplied YouTube Music 9.30.53 
 ## Required package/clone settings
 1. Select **Clone app**.
 2. Set **Package name** to `com.zunox.music` (not Default).
-3. Keep **Update permissions** and **Update providers** enabled in the UI unless the patch implementation overrides them. In the pinned upstream source, YouTube Music is explicitly handled by the **GmsCore support** patch for permission/provider rewriting; Clone app itself skips those two rewrites for this package.
+3. For YouTube Music, the pinned source explicitly skips permission/provider rewriting inside Clone app because **GmsCore support** performs those rewrites. The Clone app toggles therefore do not control those two operations for this package.
 4. Select **GmsCore support**. The pinned upstream implementation depends on Clone app, rewrites the app package and Google service references, and marks this patch unavailable for root-mounted installs.
 5. For branding, select **Custom branding** and set app name to `ZUNOX Music`; supply the ZUNOX icon asset when the patcher requests one.
 
