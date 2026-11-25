@@ -1,10 +1,19 @@
 # ZUNOX Patches
 
-ZUNOX is an independently branded patching project. The build workflow now uses the **ReVanced patch repository on GitLab**, the exact source URL supplied by the user:
+ZUNOX is an independently branded patching project. CI builds the ReVanced patch source from the GitLab repository specified by the project owner:
 
 https://gitlab.com/ReVanced/revanced-patches.git
 
-ReVanced's own repository-status notice identifies this GitLab mirror as its current development location while its GitHub repository is unavailable. Each workflow run clones this source and prints the exact upstream commit SHA.
+Each build records the exact upstream commit SHA in the package.
+
+## Required CI secret
+
+The ReVanced Gradle plugin is hosted in GitHub Packages. Add these repository secrets before running the workflow:
+
+- `REVANCED_PACKAGES_TOKEN`: a GitHub token with `read:packages` access and permission to download the ReVanced Gradle plugin package.
+- `REVANCED_PACKAGES_USERNAME` (optional): the GitHub account username that owns the token. If omitted, the workflow uses the workflow actor's username.
+
+Do not commit tokens or place them in source files. The workflow intentionally stops with a clear error if the token is missing.
 
 ## YouTube Music target profile
 
@@ -14,23 +23,25 @@ ReVanced's own repository-status notice identifies this GitLab mirror as its cur
 - Intended app label: `ZUNOX Music`
 - Install mode: non-root, alongside the original app
 
-The profile is a build plan, not a finished patched APK.
+The profile is a specification only. It is not a compiled ZUNOX patch, patched APK, or signed installer.
 
 ## Workflow output
 
-GitHub Actions clones the ReVanced GitLab source and runs its Gradle build. A successful run uploads the compiled `.rvp` patch bundle as the `zunox-revanced-patches` artifact for 14 days.
+A successful GitHub Actions run uploads the `zunox-patch-package` artifact (ZIP plus the upstream `.rvp` bundle) for 14 days. The workflow validates the RVP and ZIP archives and prints a SHA-256 checksum.
 
-**Important:** compiling the patch bundle does not patch the APKM or create a signed APK. The APK must still be patched using the compatible ReVanced CLI, with split APK handling, package/manifest validation, ZUNOX release signing, and installation testing.
+**This workflow does not yet produce an APK.** The compiled upstream RVP must still be applied to the user's original APKM using a compatible ReVanced CLI. A separately authored ZUNOX patch RVP, logo asset, split APK handling, package/manifest validation, release signing, and install/playback tests remain required before an APK can be called complete.
 
-## Release acceptance
+## Release acceptance checklist
 
-Do not call an APK ready until:
-1. The supplied APKM's base and configuration splits are handled correctly.
-2. ReVanced patches compatible with this exact app version are applied.
-3. The final manifest package is verified as `com.zunox.music`.
-4. The APK is signed with the ZUNOX release key.
-5. It installs alongside the original app and passes launch/playback checks.
+Do not label an APK ready until:
+1. The supplied APKM base and configuration splits are processed correctly.
+2. The patches are compatible with the exact target app version.
+3. Any ZUNOX-owned patches are independently compiled and documented.
+4. The final manifest package is verified as `com.zunox.music`, including provider authorities.
+5. The actual ZUNOX logo is included; no placeholder is used.
+6. The APK is signed with the ZUNOX release key.
+7. It installs alongside the original app and passes launch/playback checks.
 
 ## License
 
-ReVanced Patches is GPLv3. Preserve license/notice files, record modifications, and provide corresponding source and build instructions for derivative distributions.
+ReVanced Patches is GPLv3. Preserve upstream notices, record modifications, and provide corresponding source and build instructions for derivative distributions.
