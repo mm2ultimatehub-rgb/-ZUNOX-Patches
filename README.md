@@ -23,15 +23,23 @@ git submodule update --init --recursive
 
 ## YouTube Music compatibility
 
-The upstream README at the pinned revision lists YouTube Music **9.30.53** among its supported versions. This is an upstream compatibility declaration only; ZUNOX has not yet built or tested a patched APK against the supplied APKM. Compatibility must be verified by building and testing.
+The upstream README at the pinned revision lists YouTube Music **9.30.53** among its supported versions. This is an upstream compatibility declaration only; ZUNOX has not yet built or tested a patched APK against the supplied APKM.
+
+## ZUNOX package identity
+
+The target package ID for the cloned app is **`com.zunox.music`**, so it can be installed alongside the original **`com.google.android.apps.youtube.music`** package.
+
+The pinned upstream implementation provides a **Clone app** patch with a custom package-name option. Its YouTube Music **GmsCore support** patch depends on Clone app and handles the related Google-service, permission, and provider rewrites for a standard non-root installation. The exact profile is documented in [profiles/youtube-music-9.30.53.md](profiles/youtube-music-9.30.53.md).
 
 ## ZUNOX development status
 
 - [x] Connect and pin the upstream Morphe patch source.
 - [x] Preserve upstream license and NOTICE files in this repository.
-- [ ] Review upstream patcher/library versions and build prerequisites.
-- [ ] Add ZUNOX-specific branding/configuration as a clearly marked derivative.
-- [ ] Build the patch bundle and test against YouTube Music 9.30.53.
+- [x] Define the YouTube Music 9.30.53 ZUNOX package/patch profile.
+- [ ] Build the patch bundle from source.
+- [ ] Patch and validate the supplied APKM split set.
+- [ ] Verify final manifest package, permissions, providers and install coexistence.
+- [ ] Sign and test the APK on-device.
 - [ ] Publish a verified release only after successful build and install tests.
 
 ## License and notices
