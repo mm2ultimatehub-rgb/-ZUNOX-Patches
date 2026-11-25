@@ -1,49 +1,36 @@
 # ZUNOX Patches
 
-ZUNOX is an independently branded patch project built from the Morphe Patches source tree.
+ZUNOX is an independently branded patching project. The build workflow now uses the **ReVanced patch repository on GitLab**, the exact source URL supplied by the user:
 
-## Source and attribution
+https://gitlab.com/ReVanced/revanced-patches.git
 
-- Upstream source: https://github.com/MorpheApp/morphe-patches
-- Upstream revision pinned in this repository: `c4818af779bab85505e5e9169d0789b422bb99cd`
-- Upstream project identifies its patches as based on prior ReVanced work.
-- This repository does not claim to be the Morphe project and does not use Morphe branding.
+ReVanced's own repository-status notice identifies this GitLab mirror as its current development location while its GitHub repository is unavailable. Each workflow run clones this source and prints the exact upstream commit SHA.
 
-The upstream source is tracked as a Git submodule at `upstream/morphe-patches`. Initialize it with:
+## YouTube Music target profile
 
-```sh
-git clone --recurse-submodules https://github.com/mm2ultimatehub-rgb/-ZUNOX-Patches.git
-```
+- Input APKM: YouTube Music 9.30.53 (versionCode 93053240), previously supplied by the user
+- Original package: `com.google.android.apps.youtube.music`
+- Intended clone package: `com.zunox.music`
+- Intended app label: `ZUNOX Music`
+- Install mode: non-root, alongside the original app
 
-If already cloned:
+The profile is a build plan, not a finished patched APK.
 
-```sh
-git submodule update --init --recursive
-```
+## Workflow output
 
-## YouTube Music compatibility
+GitHub Actions clones the ReVanced GitLab source and runs its Gradle build. A successful run uploads the compiled `.rvp` patch bundle as the `zunox-revanced-patches` artifact for 14 days.
 
-The upstream README at the pinned revision lists YouTube Music **9.30.53** among its supported versions. This is an upstream compatibility declaration only; ZUNOX has not yet built or tested a patched APK against the supplied APKM.
+**Important:** compiling the patch bundle does not patch the APKM or create a signed APK. The APK must still be patched using the compatible ReVanced CLI, with split APK handling, package/manifest validation, ZUNOX release signing, and installation testing.
 
-## ZUNOX package identity
+## Release acceptance
 
-The target package ID for the cloned app is **`com.zunox.music`**, so it can be installed alongside the original **`com.google.android.apps.youtube.music`** package.
+Do not call an APK ready until:
+1. The supplied APKM's base and configuration splits are handled correctly.
+2. ReVanced patches compatible with this exact app version are applied.
+3. The final manifest package is verified as `com.zunox.music`.
+4. The APK is signed with the ZUNOX release key.
+5. It installs alongside the original app and passes launch/playback checks.
 
-The pinned upstream implementation provides a **Clone app** patch with a custom package-name option. Its YouTube Music **GmsCore support** patch depends on Clone app and handles the related Google-service, permission, and provider rewrites for a standard non-root installation. The exact profile is documented in [profiles/youtube-music-9.30.53.md](profiles/youtube-music-9.30.53.md).
+## License
 
-## ZUNOX development status
-
-- [x] Connect and pin the upstream Morphe patch source.
-- [x] Preserve upstream license and NOTICE files in this repository.
-- [x] Define the YouTube Music 9.30.53 ZUNOX package/patch profile.
-- [ ] Build the patch bundle from source.
-- [ ] Patch and validate the supplied APKM split set.
-- [ ] Verify final manifest package, permissions, providers and install coexistence.
-- [ ] Sign and test the APK on-device.
-- [ ] Publish a verified release only after successful build and install tests.
-
-## License and notices
-
-The upstream project is licensed under GNU GPL v3 with additional requirements under GPLv3 Sections 7(b), 7(c), and 7(e). The upstream LICENSE and NOTICE are retained in this repository. Derivative versions must be clearly marked as modified, preserve the NOTICE, and must not imply Morphe endorsement or use its trademarks/logos without permission.
-
-No compiled patch bundle or APK is included at this stage.
+ReVanced Patches is GPLv3. Preserve license/notice files, record modifications, and provide corresponding source and build instructions for derivative distributions.
