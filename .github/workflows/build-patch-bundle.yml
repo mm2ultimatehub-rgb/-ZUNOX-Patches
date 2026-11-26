@@ -53,8 +53,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.REVANCED_PACKAGES_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
-          ORG_GRADLE_PROJECT_gpr.user: ${{ secrets.REVANCED_PACKAGES_USERNAME || github.actor }}
-          ORG_GRADLE_PROJECT_gpr.key: ${{ secrets.REVANCED_PACKAGES_TOKEN }}
+          ORG_GRADLE_PROJECT_githubPackagesUsername: ${{ secrets.REVANCED_PACKAGES_USERNAME || github.actor }}
+          ORG_GRADLE_PROJECT_githubPackagesPassword: ${{ secrets.REVANCED_PACKAGES_TOKEN }}
         run: |
           set -euo pipefail
           cd upstream/revanced-patches
