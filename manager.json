@@ -1,7 +1,6 @@
 {
-  "created_at": "2026-11-26T12:33:05",
-  "description": "ZUNOX Music patch source. ReVanced upstream patch bundle; select Clone app and GmsCore support and configure package com.zunox.music. This source is not a prepatched APK.",
-  "download_url": "https://github.com/mm2ultimatehub-rgb/-ZUNOX-Patches/releases/download/zunox-patches-feed/zunox-patches.rvp",
-  "signature_download_url": null,
-  "version": "1.0.0"
+  "patches": {
+    "version": "1.0.1",
+    "url": "https://github.com/mm2ultimatehub-rgb/-ZUNOX-Patches/releases/download/zunox-patches-feed/zunox-patches.rvp"
+  }
 }
