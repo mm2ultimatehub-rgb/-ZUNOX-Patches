@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Require package registry credential
         env:
@@ -27,17 +29,20 @@ jobs:
             exit 1
           }
 
-      - name: Fetch upstream ReVanced patches
+      - name: Verify pinned Morphe source
         run: |
-          git clone --depth 1 https://gitlab.com/ReVanced/revanced-patches.git upstream/revanced-patches
-          git -C upstream/revanced-patches rev-parse HEAD > upstream-commit.txt
+          test -d upstream/morphe-patches/.git || {
+            echo "::error::Pinned Morphe patch submodule was not checked out."
+            exit 1
+          }
+          git -C upstream/morphe-patches rev-parse HEAD > upstream-commit.txt
 
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
           cache: gradle
-          cache-dependency-path: upstream/revanced-patches/gradle/wrapper/gradle-wrapper.properties
+          cache-dependency-path: upstream/morphe-patches/gradle/wrapper/gradle-wrapper.properties
 
       - name: Build RVP
         env:
@@ -45,7 +50,7 @@ jobs:
           ORG_GRADLE_PROJECT_githubPackagesUsername: ${{ secrets.REVANCED_PACKAGES_USERNAME || github.actor }}
           ORG_GRADLE_PROJECT_githubPackagesPassword: ${{ secrets.REVANCED_PACKAGES_TOKEN }}
         run: |
-          cd upstream/revanced-patches
+          cd upstream/morphe-patches
           chmod +x gradlew
           ./gradlew --no-daemon build
           RVP="$(find patches/build -type f -name '*.rvp' -print -quit)"
@@ -64,7 +69,7 @@ jobs:
           else
             gh release create "$TAG" dist/zunox-patches.rvp \
               --title "ZUNOX ReVanced Patch Feed" \
-              --notes "Automatically built upstream ReVanced patches. ZUNOX profile details are maintained in this repository. This is a patch archive, not a prepatched APK."
+              --notes "Built from the repository's pinned Morphe patch source. ZUNOX profile details are maintained in this repository. This is a patch bundle, not a prepatched APK; it must be applied to a compatible APK using a supported patch manager."
           fi
 
       - uses: actions/upload-artifact@v4
