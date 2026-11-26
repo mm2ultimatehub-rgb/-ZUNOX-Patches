@@ -31,7 +31,7 @@ jobs:
 
       - name: Verify pinned Morphe source
         run: |
-          test -d upstream/morphe-patches/.git || {
+          test -e upstream/morphe-patches/.git || {
             echo "::error::Pinned Morphe patch submodule was not checked out."
             exit 1
           }
