@@ -1,0 +1,74 @@
+name: Publish ZUNOX ReVanced patch feed
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/publish-zunox-feed.yml"
+      - "profiles/**"
+      - "zunox/**"
+
+permissions:
+  contents: write
+
+jobs:
+  build-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Require package registry credential
+        env:
+          PACKAGES_TOKEN: ${{ secrets.REVANCED_PACKAGES_TOKEN }}
+        run: |
+          test -n "$PACKAGES_TOKEN" || {
+            echo "::error::Repository secret REVANCED_PACKAGES_TOKEN is missing."
+            exit 1
+          }
+
+      - name: Fetch upstream ReVanced patches
+        run: |
+          git clone --depth 1 https://gitlab.com/ReVanced/revanced-patches.git upstream/revanced-patches
+          git -C upstream/revanced-patches rev-parse HEAD > upstream-commit.txt
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+          cache-dependency-path: upstream/revanced-patches/gradle/wrapper/gradle-wrapper.properties
+
+      - name: Build RVP
+        env:
+          GITHUB_TOKEN: ${{ secrets.REVANCED_PACKAGES_TOKEN }}
+          ORG_GRADLE_PROJECT_githubPackagesUsername: ${{ secrets.REVANCED_PACKAGES_USERNAME || github.actor }}
+          ORG_GRADLE_PROJECT_githubPackagesPassword: ${{ secrets.REVANCED_PACKAGES_TOKEN }}
+        run: |
+          cd upstream/revanced-patches
+          chmod +x gradlew
+          ./gradlew --no-daemon build
+          RVP="$(find patches/build -type f -name '*.rvp' -print -quit)"
+          test -n "$RVP"
+          mkdir -p "$GITHUB_WORKSPACE/dist"
+          cp "$RVP" "$GITHUB_WORKSPACE/dist/zunox-patches.rvp"
+          unzip -t "$GITHUB_WORKSPACE/dist/zunox-patches.rvp" >/dev/null
+
+      - name: Publish stable feed asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="zunox-patches-feed"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/zunox-patches.rvp --clobber
+          else
+            gh release create "$TAG" dist/zunox-patches.rvp \
+              --title "ZUNOX ReVanced Patch Feed" \
+              --notes "Automatically built upstream ReVanced patches. ZUNOX profile details are maintained in this repository. This is a patch archive, not a prepatched APK."
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zunox-patches-rvp
+          path: dist/zunox-patches.rvp
+          retention-days: 14
