@@ -1,0 +1,92 @@
+name: Build ZUNOX patch package
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/build-patch-bundle.yml", "zunox/**", "profiles/**"]
+  pull_request:
+    paths: [".github/workflows/build-patch-bundle.yml", "zunox/**", "profiles/**"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zunox-patch-package-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build upstream RVP and assemble ZUNOX profile package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ZUNOX patch profile
+        uses: actions/checkout@v4
+
+      - name: Check external GitHub Packages access
+        env:
+          REVANCED_PACKAGES_TOKEN: ${{ secrets.REVANCED_PACKAGES_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${REVANCED_PACKAGES_TOKEN}" ]; then
+            echo "::error::Missing repository secret REVANCED_PACKAGES_TOKEN. Add a GitHub token with read:packages access to the ReVanced Gradle plugin packages; GITHUB_TOKEN from this repository cannot be assumed to access another owner's package."
+            exit 1
+          fi
+
+      - name: Clone requested ReVanced patch source
+        run: |
+          set -euo pipefail
+          mkdir -p upstream
+          git clone --depth 1 https://gitlab.com/ReVanced/revanced-patches.git upstream/revanced-patches
+          cd upstream/revanced-patches
+          git rev-parse HEAD | tee ../../zunox/upstream-commit.txt
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+          cache-dependency-path: upstream/revanced-patches/gradle/wrapper/gradle-wrapper.properties
+
+      - name: Build upstream ReVanced patches
+        env:
+          GITHUB_TOKEN: ${{ secrets.REVANCED_PACKAGES_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          ORG_GRADLE_PROJECT_githubPackagesUsername: ${{ secrets.REVANCED_PACKAGES_USERNAME || github.actor }}
+          ORG_GRADLE_PROJECT_githubPackagesPassword: ${{ secrets.REVANCED_PACKAGES_TOKEN }}
+        run: |
+          set -euo pipefail
+          cd upstream/revanced-patches
+          chmod +x ./gradlew
+          ./gradlew --no-daemon --stacktrace build
+
+      - name: Verify RVP and assemble ZUNOX package
+        run: |
+          set -euo pipefail
+          mkdir -p dist/zunox-patch-package
+          RVP="$(find upstream/revanced-patches/patches/build -type f -name '*.rvp' -print -quit)"
+          if [ -z "$RVP" ]; then
+            echo "::error::Gradle build succeeded but no .rvp bundle was found under patches/build."
+            exit 1
+          fi
+          unzip -t "$RVP" >/dev/null
+          cp "$RVP" dist/zunox-patch-package/revanced-upstream.rvp
+          cp zunox/profile.json dist/zunox-patch-package/
+          cp zunox/PATCH-ARCHITECTURE.md dist/zunox-patch-package/
+          cp LICENSE dist/zunox-patch-package/
+          cp NOTICE dist/zunox-patch-package/
+          cp zunox/upstream-commit.txt dist/zunox-patch-package/
+          (cd dist && zip -qr zunox-patch-package.zip zunox-patch-package)
+          unzip -t dist/zunox-patch-package.zip >/dev/null
+          sha256sum dist/zunox-patch-package.zip
+
+      - name: Upload ZUNOX patch package
+        uses: actions/upload-artifact@v4
+        with:
+          name: zunox-patch-package
+          path: |
+            dist/zunox-patch-package.zip
+            dist/zunox-patch-package/revanced-upstream.rvp
+          if-no-files-found: error
+          retention-days: 14

@@ -1,49 +1,47 @@
 # ZUNOX Patches
 
-ZUNOX is an independently branded patch project built from the Morphe Patches source tree.
+ZUNOX is an independently branded patching project. CI builds the ReVanced patch source from the GitLab repository specified by the project owner:
 
-## Source and attribution
+https://gitlab.com/ReVanced/revanced-patches.git
 
-- Upstream source: https://github.com/MorpheApp/morphe-patches
-- Upstream revision pinned in this repository: `c4818af779bab85505e5e9169d0789b422bb99cd`
-- Upstream project identifies its patches as based on prior ReVanced work.
-- This repository does not claim to be the Morphe project and does not use Morphe branding.
+Each build records the exact upstream commit SHA in the package.
 
-The upstream source is tracked as a Git submodule at `upstream/morphe-patches`. Initialize it with:
+## Required CI secret
 
-```sh
-git clone --recurse-submodules https://github.com/mm2ultimatehub-rgb/-ZUNOX-Patches.git
-```
+The ReVanced Gradle plugin is hosted in GitHub Packages. Add these repository secrets before running the workflow:
 
-If already cloned:
+- `REVANCED_PACKAGES_TOKEN`: a GitHub token with `read:packages` access and permission to download the ReVanced Gradle plugin package.
+- `REVANCED_PACKAGES_USERNAME` (optional): the GitHub account username that owns the token. If omitted, the workflow uses the workflow actor's username.
 
-```sh
-git submodule update --init --recursive
-```
+Do not commit tokens or place them in source files. The workflow intentionally stops with a clear error if the token is missing.
 
-## YouTube Music compatibility
+## YouTube Music target profile
 
-The upstream README at the pinned revision lists YouTube Music **9.30.53** among its supported versions. This is an upstream compatibility declaration only; ZUNOX has not yet built or tested a patched APK against the supplied APKM.
+- Input APKM: YouTube Music 9.30.53 (versionCode 93053240), previously supplied by the user
+- Original package: `com.google.android.apps.youtube.music`
+- Intended clone package: `com.zunox.music`
+- Intended app label: `ZUNOX Music`
+- Install mode: non-root, alongside the original app
 
-## ZUNOX package identity
+The profile is a specification only. It is not a compiled ZUNOX patch, patched APK, or signed installer.
 
-The target package ID for the cloned app is **`com.zunox.music`**, so it can be installed alongside the original **`com.google.android.apps.youtube.music`** package.
+## Workflow output
 
-The pinned upstream implementation provides a **Clone app** patch with a custom package-name option. Its YouTube Music **GmsCore support** patch depends on Clone app and handles the related Google-service, permission, and provider rewrites for a standard non-root installation. The exact profile is documented in [profiles/youtube-music-9.30.53.md](profiles/youtube-music-9.30.53.md).
+A successful GitHub Actions run uploads the `zunox-patch-package` artifact (ZIP plus the upstream `.rvp` bundle) for 14 days. The workflow validates the RVP and ZIP archives and prints a SHA-256 checksum.
 
-## ZUNOX development status
+**This workflow does not yet produce an APK.** The compiled upstream RVP must still be applied to the user's original APKM using a compatible ReVanced CLI. A separately authored ZUNOX patch RVP, logo asset, split APK handling, package/manifest validation, release signing, and install/playback tests remain required before an APK can be called complete.
 
-- [x] Connect and pin the upstream Morphe patch source.
-- [x] Preserve upstream license and NOTICE files in this repository.
-- [x] Define the YouTube Music 9.30.53 ZUNOX package/patch profile.
-- [ ] Build the patch bundle from source.
-- [ ] Patch and validate the supplied APKM split set.
-- [ ] Verify final manifest package, permissions, providers and install coexistence.
-- [ ] Sign and test the APK on-device.
-- [ ] Publish a verified release only after successful build and install tests.
+## Release acceptance checklist
 
-## License and notices
+Do not label an APK ready until:
+1. The supplied APKM base and configuration splits are processed correctly.
+2. The patches are compatible with the exact target app version.
+3. Any ZUNOX-owned patches are independently compiled and documented.
+4. The final manifest package is verified as `com.zunox.music`, including provider authorities.
+5. The actual ZUNOX logo is included; no placeholder is used.
+6. The APK is signed with the ZUNOX release key.
+7. It installs alongside the original app and passes launch/playback checks.
 
-The upstream project is licensed under GNU GPL v3 with additional requirements under GPLv3 Sections 7(b), 7(c), and 7(e). The upstream LICENSE and NOTICE are retained in this repository. Derivative versions must be clearly marked as modified, preserve the NOTICE, and must not imply Morphe endorsement or use its trademarks/logos without permission.
+## License
 
-No compiled patch bundle or APK is included at this stage.
+ReVanced Patches is GPLv3. Preserve upstream notices, record modifications, and provide corresponding source and build instructions for derivative distributions.

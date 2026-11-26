@@ -1,30 +1,38 @@
 # ZUNOX YouTube Music profile — 9.30.53
 
-This is the intended patch configuration for the supplied YouTube Music 9.30.53 APKM. It is a configuration specification, not a compiled patch bundle or APK.
+Target supplied by the user. This file records the intended patching and validation steps; it is not a completed APK.
 
 ## Input
-- Application ID: `com.google.android.apps.youtube.music`
-- Version: `9.30.53` (versionCode `93053240`)
-- Input format: APKM split package (base APK plus configuration splits)
-- Target install type: standard, non-root installation
+- App/version: YouTube Music 9.30.53 (versionCode 93053240)
+- Original package: `com.google.android.apps.youtube.music`
+- Input: APKM containing base and configuration splits
+- Install type: standard, non-root
 
-## Required package/clone settings
-1. Select **Clone app**.
-2. Set **Package name** to `com.zunox.music` (not Default).
-3. For YouTube Music, the pinned source explicitly skips permission/provider rewriting inside Clone app because **GmsCore support** performs those rewrites. The Clone app toggles therefore do not control those two operations for this package.
-4. Select **GmsCore support**. The pinned upstream implementation depends on Clone app, rewrites the app package and Google service references, and marks this patch unavailable for root-mounted installs.
-5. For branding, select **Custom branding** and set app name to `ZUNOX Music`; supply the ZUNOX icon asset when the patcher requests one.
+## Intended ZUNOX identity
+- Package: `com.zunox.music`
+- App label: `ZUNOX Music`
+- Must install alongside the original app.
 
-## Why both package-related patches matter
-The pinned upstream implementation defines Clone app as the patch that changes the manifest package name. The YouTube Music GmsCore support patch depends on Clone app and updates Google service references, permissions, authorities, and provider integration for a non-root cloned install. For YouTube Music, the upstream Clone app code intentionally leaves permission/provider rewriting to GmsCore support.
+## Patch source
+Use the ReVanced patch source explicitly supplied by the user:
+`https://gitlab.com/ReVanced/revanced-patches.git`
 
-## Validation required before release
-- Build the patch bundle from the pinned upstream source.
-- Patch all required APK splits consistently; do not treat this APKM as a single standalone APK.
-- Verify the final manifest package is exactly `com.zunox.music`.
-- Verify no install-time permission/provider authority collisions remain.
-- Sign the output with the ZUNOX release key.
-- Install beside the original YouTube Music and test launch, sign-in, playback, background playback, downloads/sharing and update behavior.
+Do not substitute Morphe patches for this request. The GitHub Actions workflow clones the ReVanced GitLab mirror and prints the source commit SHA used.
 
-## Current status
-The profile has been documented in ZUNOX. No patch bundle has been compiled, no APK has been produced or signed, and no install test has passed yet. Do not distribute this profile as a finished APK.
+## Required patching sequence
+1. Confirm the compiled ReVanced bundle contains patches compatible with this exact YouTube Music version.
+2. Use a compatible ReVanced CLI and its supported APKM/split workflow. Do not assume the base APK alone is sufficient.
+3. Apply the supported package-name/clone patch to set `com.zunox.music`.
+4. Apply compatible GmsCore/MicroG support for a non-root install, if available for this app version.
+5. Apply custom branding as `ZUNOX Music`; use the actual ZUNOX icon asset supplied by the user, not a placeholder.
+6. Inspect final manifest package, authorities, permissions, and split relationships.
+7. Sign with the ZUNOX release keystore and verify signature continuity for future updates.
+
+## Acceptance checks
+- Installs beside the original YouTube Music.
+- No Android package or provider-authority conflict.
+- Launch and supported sign-in work.
+- Playback and background playback work.
+- Release signing and version metadata are correct.
+
+A patch-bundle build alone is not an APK. Do not announce a release until the APK is built, signed, and install-tested.
